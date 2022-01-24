@@ -29,18 +29,19 @@ or, to build the full suite of utilities:
 make all
 ```
 
-## Executables
+## Running geth
 
-The go-ethereum project comes with several wrappers/executables found in the `cmd`
-directory.
+To do so:
 
 ```shell
 sh script.sh
 ```
 ## Geth Option
 
-If modify option, change go-ethereum/genesis & sh script.sh file.
-The default options are:
+If modify Geth's options, change go-ethereum/genesis & go-ethereum/script.sh files.
+
+The default options are:  
+
 |    Command    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | :-----------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |   `chainId`    | 2757  |
