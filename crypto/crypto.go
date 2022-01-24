@@ -45,12 +45,6 @@ const RecoveryIDOffset = 64
 // DigestLength sets the signature digest exact length
 const DigestLength = 32
 
-//MiMC7
-var (
-	MiMC7Seed     = Keccak256([]byte("mimc7_seed"))
-	MiMC7Modul, _ = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
-	MiMC7Modular  = MiMC7Modul.Bytes()
-)
 var (
 	secp256k1N, _  = new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
 	secp256k1halfN = new(big.Int).Div(secp256k1N, big.NewInt(2))
@@ -88,55 +82,6 @@ func Keccak256(data ...[]byte) []byte {
 	}
 	d.Read(b)
 	return b
-}
-
-func MiMC7(data []byte) []byte {
-	result := make([]byte, 32)
-	m := new(big.Int).SetBytes(data[0:32])
-	if len(data) <= 32 {
-		result = MiMC7Round(m, m).Bytes()
-	} else {
-		for i := 32; i < len(data); i += 32 {
-			key := new(big.Int).SetBytes(data[i : i+32])
-			m = MiMC7Round(m, key)
-		}
-		result = m.Bytes()
-	}
-	return result
-}
-
-func MiMC7Round(m *big.Int, key *big.Int) *big.Int {
-	c := new(big.Int)
-	ex := new(big.Int).SetInt64(7)
-	//fmt.Printf("m:%v key:%v\n", m, key)
-	c.Add(m, key)
-	//fmt.Printf("add:%v\n", c)
-	c.Mod(c, MiMC7Modul)
-	//fmt.Printf("mod:%v\n", c)
-	c.Exp(c, ex, MiMC7Modul)
-	//fmt.Printf("Exp:%v\n", c)
-	//t := new(big.Int)
-	//fmt.Printf("seed:%v\n", t.SetBytes(MiMC7Seed))
-	R_ := new(big.Int).SetBytes(MiMC7Seed)
-
-	for i := 0; i < 90; i += 1 {
-		R := Keccak256(R_.Bytes())
-		R_ = new(big.Int).SetBytes(R)
-		//fmt.Printf("i:%v R:%v\n", i, R_)
-		c.Add(c, key)
-		c.Mod(c, MiMC7Modul)
-		c.Add(c, R_)
-		c.Mod(c, MiMC7Modul)
-		c.Exp(c, ex, MiMC7Modul)
-		//fmt.Printf("i:%v c:%v\n", i, c)
-	}
-	c.Add(c, key)
-	c.Mod(c, MiMC7Modul)
-	c.Add(c, m)
-	c.Mod(c, MiMC7Modul)
-	c.Add(c, key)
-	c.Mod(c, MiMC7Modul)
-	return c
 }
 
 // Keccak256Hash calculates and returns the Keccak256 hash of the input data,
