@@ -212,9 +212,7 @@ func (c *sha256hash) RequiredGas(input []byte) uint64 {
 	return uint64(len(input)+31)/32*params.Sha256PerWordGas + params.Sha256BaseGas
 }
 func (c *sha256hash) Run(input []byte) ([]byte, error) {
-	fmt.Printf("hash_input = %#v\n", input)
 	h := sha256.Sum256(input)
-	fmt.Println(h)
 	return h[:], nil
 }
 
@@ -225,14 +223,14 @@ type MiMC7 struct{}
 // This method does not require any overflow checking as the input size gas costs
 // required for anything significant is so high it's impossible to pay for.
 func (c *MiMC7) RequiredGas(input []byte) uint64 {
-	return uint64(len(input)+31)/32*params.Sha256PerWordGas + params.Sha256BaseGas
+	input_len := uint64(len(input)+31) / 32
+	if input_len < 3 {
+		return params.MiMC7PerWordGas
+	}
+	return (input_len - 1) * params.MiMC7PerWordGas
 }
-
-//시간 비율로 가스 계산
 func (c *MiMC7) Run(input []byte) ([]byte, error) {
-	fmt.Printf("mimc_input = %#v\n", input)
 	h := crypto.MiMC7(input)
-	fmt.Println(h)
 	return h[:], nil
 }
 
