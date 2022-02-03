@@ -52,6 +52,7 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{3}):  &ripemd160hash{},
 	common.BytesToAddress([]byte{4}):  &dataCopy{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
+	common.BytesToAddress([]byte{20}): &poseidon{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -66,6 +67,7 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{7}):  &bn256ScalarMulByzantium{},
 	common.BytesToAddress([]byte{8}):  &bn256PairingByzantium{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
+	common.BytesToAddress([]byte{20}): &poseidon{},
 }
 
 // PrecompiledContractsIstanbul contains the default set of pre-compiled Ethereum
@@ -81,6 +83,7 @@ var PrecompiledContractsIstanbul = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{8}):  &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{9}):  &blake2F{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
+	common.BytesToAddress([]byte{20}): &poseidon{},
 }
 
 // PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
@@ -96,6 +99,7 @@ var PrecompiledContractsBerlin = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{8}):  &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{9}):  &blake2F{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
+	common.BytesToAddress([]byte{20}): &poseidon{},
 }
 
 // PrecompiledContractsBLS contains the set of pre-compiled Ethereum
@@ -110,6 +114,7 @@ var PrecompiledContractsBLS = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{16}): &bls12381Pairing{},
 	common.BytesToAddress([]byte{17}): &bls12381MapG1{},
 	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
+	common.BytesToAddress([]byte{20}): &poseidon{},
 }
 
 var (
@@ -120,6 +125,7 @@ var (
 )
 
 func init() {
+	fmt.Println("vm_init")
 	for k := range PrecompiledContractsHomestead {
 		PrecompiledAddressesHomestead = append(PrecompiledAddressesHomestead, k)
 	}
@@ -231,6 +237,20 @@ func (c *MiMC7) RequiredGas(input []byte) uint64 {
 }
 func (c *MiMC7) Run(input []byte) ([]byte, error) {
 	h := crypto.MiMC7(input)
+	return h[:], nil
+}
+
+type poseidon struct{}
+
+func (c *poseidon) RequiredGas(input []byte) uint64 {
+	input_len := uint64(len(input)+31) / 32
+	if input_len < 3 {
+		return params.MiMC7PerWordGas
+	}
+	return (input_len - 1) * params.MiMC7PerWordGas
+}
+func (c *poseidon) Run(input []byte) ([]byte, error) {
+	h := crypto.Poseidon(input)
 	return h[:], nil
 }
 

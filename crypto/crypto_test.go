@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -41,7 +42,12 @@ func TestKeccak256Hash(t *testing.T) {
 	exp, _ := hex.DecodeString("4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45")
 	checkhash(t, "Sha3-256-array", func(in []byte) []byte { h := Keccak256Hash(in); return h[:] }, msg, exp)
 }
-
+func TestPoseidonConstant(t *testing.T) {
+	tt := poseidon256([]*big.Int{big.NewInt(1)})
+	fmt.Println(tt)
+	h := poseidon256([]*big.Int{big.NewInt(1)}).Bytes()
+	fmt.Println(h)
+}
 func TestKeccak256Hasher(t *testing.T) {
 	msg := []byte("abc")
 	exp, _ := hex.DecodeString("4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45")

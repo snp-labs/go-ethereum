@@ -32,6 +32,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/google"
 	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/sha3"
 )
@@ -57,6 +58,11 @@ var (
 )
 
 var errInvalidPubkey = errors.New("invalid secp256k1 public key")
+
+//poseidon
+var NROUNDSP = []int{56, 57, 56, 60, 60, 63, 64, 63, 60, 66, 60, 65, 70, 60, 64, 68}
+
+const NROUNDSF = 8
 
 // KeccakState wraps sha3.state. In addition to the usual hash methods, it also supports
 // Read to get a variable amount of data from the hash state. Read is faster than Sum
@@ -108,27 +114,19 @@ func MiMC7(data []byte) []byte {
 func MiMC7Round(m *big.Int, key *big.Int) *big.Int {
 	c := new(big.Int)
 	ex := new(big.Int).SetInt64(7)
-	//fmt.Printf("m:%v key:%v\n", m, key)
 	c.Add(m, key)
-	//fmt.Printf("add:%v\n", c)
 	c.Mod(c, MiMC7Modul)
-	//fmt.Printf("mod:%v\n", c)
 	c.Exp(c, ex, MiMC7Modul)
-	//fmt.Printf("Exp:%v\n", c)
-	//t := new(big.Int)
-	//fmt.Printf("seed:%v\n", t.SetBytes(MiMC7Seed))
 	R_ := new(big.Int).SetBytes(MiMC7Seed)
 
 	for i := 0; i < 90; i += 1 {
 		R := Keccak256(R_.Bytes())
 		R_ = new(big.Int).SetBytes(R)
-		//fmt.Printf("i:%v R:%v\n", i, R_)
 		c.Add(c, key)
 		c.Mod(c, MiMC7Modul)
 		c.Add(c, R_)
 		c.Mod(c, MiMC7Modul)
 		c.Exp(c, ex, MiMC7Modul)
-		//fmt.Printf("i:%v c:%v\n", i, c)
 	}
 	c.Add(c, key)
 	c.Mod(c, MiMC7Modul)
@@ -137,6 +135,71 @@ func MiMC7Round(m *big.Int, key *big.Int) *big.Int {
 	c.Add(c, key)
 	c.Mod(c, MiMC7Modul)
 	return c
+}
+
+func Poseidon(data []byte) []byte {
+	result := make([]byte, 32)
+	t := (len(data)-31)/32 + 1
+	inputs := make([]*big.Int, t)
+	j := 0
+	for i := 0; i < len(data); i += 32 {
+		inputs[j] = big.NewInt(0).SetBytes(data[i : i+32])
+		j++
+	}
+	no_padd := poseidon256(inputs).Bytes()
+	copy(result[32-len(no_padd):], no_padd[:])
+	return result
+}
+
+func poseidon256(input []*big.Int) *big.Int {
+	t := len(input) + 1
+	nRoundsFDiv2 := NROUNDSF / 2
+	nRoundsP := NROUNDSP[t-2]
+	tmp := big.NewInt(0)
+	tmp1 := big.NewInt(1)
+	tmp2 := big.NewInt(3)
+	tmp2.Add(tmp, tmp1)
+	C := PoseidonConstant.c[t-2]
+	S := PoseidonConstant.s[t-2]
+	M := PoseidonConstant.m[t-2]
+	P := PoseidonConstant.p[t-2]
+	state := make([]*big.Int, t)
+	state[0] = big.NewInt(0)
+	for i := 0; i < t-1; i++ {
+		state[i+1] = big.NewInt(0).Set(input[i])
+	}
+	ArrAdd(state, C, 0) //state = state + C[:]
+	for i := 0; i < nRoundsFDiv2-1; i++ {
+		ArrExp5(state)              // state = state^5
+		ArrAdd(state, C, (i+1)*t)   // state = state[:] + C[(i+1)*t: ] -> loop len(state)
+		state = VecMatMul(state, M) // state = state * M
+	}
+	ArrExp5(state)                     // state = state^5
+	ArrAdd(state, C, (nRoundsFDiv2)*t) // state = ...state[:] + ...C[nRoundsF/2*t: ] -> loop len(state)
+	state = VecMatMul(state, P)        // state = state * P ->  Vec=state;  Mat=P;
+	for i := 0; i < nRoundsP; i++ {
+		state[0].Exp(state[0], big.NewInt(5), bn256.Order) // state[0] = state[0]^5
+		state[0].Add(state[0], C[(nRoundsFDiv2+1)*t+i])    // state[0] += C[(nRoundsF/2+1)*t + i]
+		mul := big.NewInt(0)
+		newState0 := big.NewInt(0)
+		for j := 0; j < t; j++ {
+			mul.Mul(S[(t*2-1)*i+j], state[j]) // mul = S[(t*2-1)*i+j] * state[j]
+			newState0.Add(newState0, mul)     // newState0 += mul
+		}
+		for k := 1; k < t; k++ {
+			mul.Mul(state[0], S[(t*2-1)*i+t+k-1]) // mul = state[0] * S[(t*2-1)*i+t+k-1]
+			state[k].Add(state[k], mul)           // state[k] += mul
+		}
+		state[0] = newState0 //state[0] = newState0
+	}
+	for i := 0; i < nRoundsFDiv2-1; i++ {
+		ArrExp5(state)                                  // state = [(...state)^5]
+		ArrAdd(state, C, (nRoundsFDiv2+1+i)*t+nRoundsP) // state = state + C[(nRoundsF/2+1)*t+sP[t-2]+i*t:] -> loop len(state)
+		state = VecMatMul(state, M)                     // state = state * M ->  Vec=state;  Mat=M;
+	}
+	ArrExp5(state)              // state = [(...state)^5]
+	state = VecMatMul(state, M) // state = state * M ->  Vec=state;  Mat=M;
+	return state[0]             // hash result = state[0]
 }
 
 // Keccak256Hash calculates and returns the Keccak256 hash of the input data,
@@ -337,4 +400,34 @@ func zeroBytes(bytes []byte) {
 	for i := range bytes {
 		bytes[i] = 0
 	}
+}
+
+func ArrExp(x []*big.Int, y *big.Int) {
+	for i := 0; i < len(x); i++ {
+		x[i].Exp(x[i], y, bn256.Order)
+	}
+}
+func ArrExp5(x []*big.Int) {
+	ArrExp(x, big.NewInt(5))
+}
+
+// addArray computes x = x[:] + y[mv:]
+func ArrAdd(x []*big.Int, y []*big.Int, mv int) {
+	for i := 0; i < len(x); i++ {
+		x[i].Add(x[i], y[mv+i]) //.Mod(x[i], ff.Modulus())
+	}
+}
+func VecMatMul(x []*big.Int, y [][]*big.Int) []*big.Int {
+	l := len(x)
+	result := make([]*big.Int, l)
+	mul := new(big.Int)
+	for i := 0; i < l; i++ {
+		result[i] = big.NewInt(0)
+		for j := 0; j < l; j++ {
+			mul.Mul(y[j][i], x[j]).Mod(mul, bn256.Order)
+			result[i].Add(result[i], mul)
+		}
+		result[i].Mod(result[i], bn256.Order)
+	}
+	return result
 }
