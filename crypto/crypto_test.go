@@ -42,12 +42,55 @@ func TestKeccak256Hash(t *testing.T) {
 	exp, _ := hex.DecodeString("4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45")
 	checkhash(t, "Sha3-256-array", func(in []byte) []byte { h := Keccak256Hash(in); return h[:] }, msg, exp)
 }
-func TestPoseidonConstant(t *testing.T) {
-	tt := poseidon256([]*big.Int{big.NewInt(1)})
-	fmt.Println(tt)
-	h := poseidon256([]*big.Int{big.NewInt(1)}).Bytes()
-	fmt.Println(h)
+
+func TestMiMC7(t *testing.T) {
+	hasher := mimc7round(big.NewInt(0), big.NewInt(0))
+	if hasher.String() != "6820031607755013777614199991418810592620510639376477467029191750349857433162" {
+		t.Fatal("MiMC7 should've returned error")
+	}
+	hasher = mimc7round(big.NewInt(1), big.NewInt(3))
+	if hasher.String() != "7845134309275594375662620561762034202086848930581342239774388915585721294426" {
+		t.Fatal("MiMC7 should've returned error")
+	}
+	m, _ := big.NewInt(0).SetString("107481256145131950166696407539903089360224241958747852845937641362011810361204", 0)
+	k, _ := big.NewInt(0).SetString("7199580725802014190868847430230009806007820765041437321096080870129439247403", 0)
+	hasher = mimc7round(m, k)
+	if hasher.String() != "6918696591349617515000522757388910400829321209984507219192903828571753539088" {
+		//fmt.Println(m, k, hasher)
+		t.Fatal("MiMC7 should've returned error")
+	}
 }
+
+func BenchmarkMiMC7(b *testing.B) {
+	input, _ := new(big.Int).SetString("9989051620750914585850546081941653841776809718687451684622678807385399211877", 0)
+	for i := 0; i < b.N; i++ {
+		mimc7round(input, input)
+	}
+}
+
+func TestPoseidon(t *testing.T) {
+	hasher := poseidon256([]*big.Int{big.NewInt(1)})
+	if hasher.String() != "18586133768512220936620570745912940619677854269274689475585506675881198879027" {
+		t.Fatal("Poseidon should've returned error")
+	}
+	hasher = poseidon256([]*big.Int{big.NewInt(1), big.NewInt(2), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0)})
+	fmt.Printf("%x\n", hasher)
+	if hasher.String() != "15336558801450556532856248569924170992202208561737609669134139141992924267169" {
+		t.Fatal("Poseidon should've returned error")
+	}
+	hasher = poseidon256([]*big.Int{big.NewInt(1), big.NewInt(2), big.NewInt(3), big.NewInt(4), big.NewInt(5), big.NewInt(6), big.NewInt(7), big.NewInt(8), big.NewInt(9), big.NewInt(10), big.NewInt(11), big.NewInt(12), big.NewInt(13), big.NewInt(14), big.NewInt(15), big.NewInt(16)})
+	if hasher.String() != "9989051620750914585850546081941653841776809718687451684622678807385399211877" {
+		t.Fatal("Poseidon should've returned error")
+	}
+}
+func BenchmarkPoseidon(b *testing.B) {
+	input, _ := new(big.Int).SetString("9989051620750914585850546081941653841776809718687451684622678807385399211877", 0)
+	var arr = []*big.Int{input}
+	for i := 0; i < b.N; i++ {
+		poseidon256(arr)
+	}
+}
+
 func TestKeccak256Hasher(t *testing.T) {
 	msg := []byte("abc")
 	exp, _ := hex.DecodeString("4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45")
