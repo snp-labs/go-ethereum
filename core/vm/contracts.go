@@ -125,7 +125,6 @@ var (
 )
 
 func init() {
-	fmt.Println("vm_init")
 	for k := range PrecompiledContractsHomestead {
 		PrecompiledAddressesHomestead = append(PrecompiledAddressesHomestead, k)
 	}
@@ -244,10 +243,7 @@ type poseidon struct{}
 
 func (c *poseidon) RequiredGas(input []byte) uint64 {
 	input_len := uint64(len(input)+31) / 32
-	if input_len < 3 {
-		return params.MiMC7PerWordGas
-	}
-	return (input_len - 1) * params.MiMC7PerWordGas
+	return input_len * params.PoseidonPerWordGas
 }
 func (c *poseidon) Run(input []byte) ([]byte, error) {
 	h := crypto.Poseidon(input)

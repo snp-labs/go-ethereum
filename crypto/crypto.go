@@ -98,42 +98,32 @@ func Keccak256(data ...[]byte) []byte {
 
 func MiMC7(data []byte) []byte {
 	result := make([]byte, 32)
+	no_padd := make([]byte, 32)
 	m := new(big.Int).SetBytes(data[0:32])
 	if len(data) <= 32 {
-		result = MiMC7Round(m, m).Bytes()
+		no_padd = mimc7round(m, m).Bytes()
 	} else {
 		for i := 32; i < len(data); i += 32 {
 			key := new(big.Int).SetBytes(data[i : i+32])
-			m = MiMC7Round(m, key)
+			m = mimc7round(m, key)
 		}
-		result = m.Bytes()
+		no_padd = m.Bytes()
 	}
+	copy(result[32-len(no_padd):], no_padd[:])
 	return result
 }
 
-func MiMC7Round(m *big.Int, key *big.Int) *big.Int {
+func mimc7round(m *big.Int, key *big.Int) *big.Int {
 	c := new(big.Int)
-	ex := new(big.Int).SetInt64(7)
-	c.Add(m, key)
-	c.Mod(c, MiMC7Modul)
-	c.Exp(c, ex, MiMC7Modul)
+	ex := big.NewInt(7)
+	c.Add(m, key).Exp(c, ex, bn256.Order)
 	R_ := new(big.Int).SetBytes(MiMC7Seed)
-
 	for i := 0; i < 90; i += 1 {
 		R := Keccak256(R_.Bytes())
 		R_ = new(big.Int).SetBytes(R)
-		c.Add(c, key)
-		c.Mod(c, MiMC7Modul)
-		c.Add(c, R_)
-		c.Mod(c, MiMC7Modul)
-		c.Exp(c, ex, MiMC7Modul)
+		c.Add(c, key).Add(c, R_).Exp(c, ex, bn256.Order)
 	}
-	c.Add(c, key)
-	c.Mod(c, MiMC7Modul)
-	c.Add(c, m)
-	c.Mod(c, MiMC7Modul)
-	c.Add(c, key)
-	c.Mod(c, MiMC7Modul)
+	c.Add(c, key).Add(c, m).Add(c, key).Mod(c, bn256.Order)
 	return c
 }
 
@@ -424,7 +414,7 @@ func VecMatMul(x []*big.Int, y [][]*big.Int) []*big.Int {
 	for i := 0; i < l; i++ {
 		result[i] = big.NewInt(0)
 		for j := 0; j < l; j++ {
-			mul.Mul(y[j][i], x[j]).Mod(mul, bn256.Order)
+			mul.Mul(y[j][i], x[j])
 			result[i].Add(result[i], mul)
 		}
 		result[i].Mod(result[i], bn256.Order)
