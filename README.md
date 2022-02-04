@@ -52,14 +52,39 @@ The default options are:
 |   `ws.port`    | 8545  |
 |   `ws.api`    | `admin,eth,debug,miner,net,txpool,personal,web3`  |
 ## How to Use PreCompiled Contract MiMC7 in Solidity
+The input data must padded the remaining left side of 32bytes to "0". (ex 0x01 -> 0x0000000000000000000000000000000000000000000000000000000000000001)
 ```
-function callmimc(bytes memory data) public returns (bytes32) {
-  uint256 len = data.length;
-  bytes32[1] memory out;
+function callmimc(bytes32[] memory data) public returns (bytes32 result) {
+  uint256 len = data.length*32;
   assembly {
-      let success := call(0x186A0, 0x13, 0, add(data,0x20), len, out, 0x20)
+    let memPtr := mload(0x40)
+      let success := call(gas(), 0x13, 0, add(data, 0x20), len, memPtr, 0x20)
+      switch success
+      case 0 {
+        revert(0,0)
+      } default {
+        result := mload(memPtr)
+      }
   }
-  emit showbytes32(out[0]);
-  return out[0];
+  emit showbytes32(result);
 }
+```
+
+## How to Use PreCompiled Contract Poseidon in Solidity
+The input data must padded the remaining left side of 32bytes to "0". (ex 0x01 -> 0x0000000000000000000000000000000000000000000000000000000000000001)
+```
+function callposeidon(bytes32[] memory data) public returns (bytes32 result) {
+  uint256 len = data.length*32;
+  assembly {
+    let memPtr := mload(0x40)
+      let success := call(gas(), 0x14, 0, add(data, 0x20), len, memPtr, 0x20)
+      switch success
+      case 0 {
+        revert(0,0)
+      } default {
+        result := mload(memPtr)
+      }
+  }
+  emit showbytes32(result);
+  }
 ```
