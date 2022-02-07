@@ -1,4 +1,4 @@
-## Go Ethereum
+## Go Ethereum + Precompiled Contract(MiMC7, Poseidon)
 
 Official Golang implementation of the Ethereum protocol.
 
@@ -9,8 +9,39 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 [![Travis](https://travis-ci.com/ethereum/go-ethereum.svg?branch=master)](https://travis-ci.com/ethereum/go-ethereum)
 [![Discord](https://img.shields.io/badge/discord-join%20chat-blue.svg)](https://discord.gg/nthXNEv)
 
-Automated builds are available for stable releases and the unstable master branch. Binary
-archives are published at https://geth.ethereum.org/downloads/.
+## MiMC
+MiMC7 is mapped to Opcode 0x13.  
+Detail MiMC protocol : https://eprint.iacr.org/2016/492.pdf  
+etail MiMC7 protocol : https://iden3-docs.readthedocs.io/en/latest/_downloads/a04267077fb3fdbf2b608e014706e004/Ed-DSA.pdf  
+MiMC7 algorithm :  
+```
+SEED = keccak256("mimc7_seed")
+ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617
+
+function MiMC7(inputs)
+  if len(inputs) <= 1 then
+    output = mimc7round(inputs[0], inputsinputs[0])
+  else
+    output = input[0]
+    for i = 1 to i < len(inputs) do
+      output = mimc7round(output, input[i])
+    endfor
+  endif
+  return output
+
+function mimc7round(m, key)
+  rc = keccak256(SEED)
+  c = (m + key)^7 mod ORDER // round 1
+  for i = 2 to i < 92 do    // round 2 ~ 91
+    c = (c + key + rc)^7 mod ORDER
+    rc = keccak256(rc)
+  endfor
+  output = (c + key + m + key) mod ORDER
+  return output
+```
+## Poseidon
+MiMC7 is mapped to Opcode 0x14.  
+The Poseidon protocol referred to https://github.com/iden3/go-iden3-crypto/tree/master/poseidon  
 
 ## Building the source
 
@@ -31,15 +62,30 @@ make all
 
 ## Running geth
 
-To do so:
-
-```shell
-sh script.sh
+To do  
+First setup & start :
+```
+sh script.sh setup start
+```
+Restart Geth :
+```
+sh script.sh start
+```
+Remove all chaindata & account :
+```
+sh script.sh rm
+```
+Reset all chaindata & account :
+```
+sh script.sh reset
+```
+Same as
+```
+sh script.sh rm setup
 ```
 ## Geth Option
 
-If modify Geth's options, change go-ethereum/genesis & go-ethereum/script.sh files.
-
+If modify Geth's options, change go-ethereum/genesis & go-ethereum/script.sh files.  
 The default options are:  
 
 |    Command    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -51,14 +97,23 @@ The default options are:
 |   `ws.corsdomain`    | 127.0.0.1  |
 |   `ws.port`    | 8545  |
 |   `ws.api`    | `admin,eth,debug,miner,net,txpool,personal,web3`  |
+## PreCompiled Contract MiMC7
+In this project, mimc7 was added to opcode 0x13.  
+mimc7 https://iden3-docs.readthedocs.io/en/latest/_downloads/a04267077fb3fdbf2b608e014706e004/Ed-DSA.pdf
+
+
 ## How to Use PreCompiled Contract MiMC7 in Solidity
-The input data must padded the remaining left side of 32bytes to "0". (ex 0x01 -> 0x0000000000000000000000000000000000000000000000000000000000000001)
+The input data must padded the remaining left side of 32bytes to "0". (ex 0x01 -> 0x0000000000000000000000000000000000000000000000000000000000000001)  
+If solidity version order than v0.5.0, use "gas" instead of "gas()" as the first factor in the call function.
+
 ```
+pragma solidity >=0.5.0
 function callmimc(bytes32[] memory data) public returns (bytes32 result) {
   uint256 len = data.length*32;
   assembly {
     let memPtr := mload(0x40)
       let success := call(gas(), 0x13, 0, add(data, 0x20), len, memPtr, 0x20)
+      //let success := call(gas, 0x13, 0, add(data, 0x20), len, memPtr, 0x20)
       switch success
       case 0 {
         revert(0,0)
@@ -66,18 +121,20 @@ function callmimc(bytes32[] memory data) public returns (bytes32 result) {
         result := mload(memPtr)
       }
   }
-  emit showbytes32(result);
 }
 ```
 
 ## How to Use PreCompiled Contract Poseidon in Solidity
-The input data must padded the remaining left side of 32bytes to "0". (ex 0x01 -> 0x0000000000000000000000000000000000000000000000000000000000000001)
+The input data must padded the remaining left side of 32bytes to "0". (ex 0x01 -> 0x0000000000000000000000000000000000000000000000000000000000000001)  
+If solidity version order than v0.5.0, use "gas" instead of "gas()" as the first factor in the call function.
 ```
+pragma solidity >=0.5.0
 function callposeidon(bytes32[] memory data) public returns (bytes32 result) {
   uint256 len = data.length*32;
   assembly {
     let memPtr := mload(0x40)
       let success := call(gas(), 0x14, 0, add(data, 0x20), len, memPtr, 0x20)
+      //let success := call(gas, 0x14, 0, add(data, 0x20), len, memPtr, 0x20)
       switch success
       case 0 {
         revert(0,0)
@@ -85,6 +142,5 @@ function callposeidon(bytes32[] memory data) public returns (bytes32 result) {
         result := mload(memPtr)
       }
   }
-  emit showbytes32(result);
-  }
+}
 ```
