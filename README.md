@@ -40,7 +40,7 @@ function mimc7round(m, key)
   return output
 ```
 ## Poseidon
-MiMC7 is mapped to Opcode 0x14.  
+Poseidon is mapped to Opcode 0x14.  
 The Poseidon protocol referred to https://github.com/iden3/go-iden3-crypto/tree/master/poseidon  
 
 ## Building the source
