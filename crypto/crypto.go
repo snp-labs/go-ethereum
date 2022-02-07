@@ -47,22 +47,19 @@ const RecoveryIDOffset = 64
 const DigestLength = 32
 
 //MiMC7
-var (
-	MiMC7Seed     = Keccak256([]byte("mimc7_seed"))
-	MiMC7Modul, _ = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
-	MiMC7Modular  = MiMC7Modul.Bytes()
-)
+var MiMC7Seed = Keccak256([]byte("mimc7_seed"))
+
+//poseidon
+var NROUNDSP = []int{56, 57, 56, 60, 60, 63, 64, 63, 60, 66, 60, 65, 70, 60, 64, 68}
+
+const NROUNDSF = 8
+
 var (
 	secp256k1N, _  = new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
 	secp256k1halfN = new(big.Int).Div(secp256k1N, big.NewInt(2))
 )
 
 var errInvalidPubkey = errors.New("invalid secp256k1 public key")
-
-//poseidon
-var NROUNDSP = []int{56, 57, 56, 60, 60, 63, 64, 63, 60, 66, 60, 65, 70, 60, 64, 68}
-
-const NROUNDSF = 8
 
 // KeccakState wraps sha3.state. In addition to the usual hash methods, it also supports
 // Read to get a variable amount of data from the hash state. Read is faster than Sum

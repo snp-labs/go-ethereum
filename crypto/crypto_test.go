@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -74,7 +73,6 @@ func TestPoseidon(t *testing.T) {
 		t.Fatal("Poseidon should've returned error")
 	}
 	hasher = poseidon256([]*big.Int{big.NewInt(1), big.NewInt(2), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0)})
-	fmt.Printf("%x\n", hasher)
 	if hasher.String() != "15336558801450556532856248569924170992202208561737609669134139141992924267169" {
 		t.Fatal("Poseidon should've returned error")
 	}
