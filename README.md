@@ -12,7 +12,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 ## MiMC
 MiMC7 is mapped to Opcode 0x13.  
 Detail MiMC protocol : https://eprint.iacr.org/2016/492.pdf  
-etail MiMC7 protocol : https://iden3-docs.readthedocs.io/en/latest/_downloads/a04267077fb3fdbf2b608e014706e004/Ed-DSA.pdf  
+Detail MiMC7 protocol : https://iden3-docs.readthedocs.io/en/latest/_downloads/a04267077fb3fdbf2b608e014706e004/Ed-DSA.pdf  
 MiMC7 algorithm :  
 ```
 SEED = keccak256("mimc7_seed")
