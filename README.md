@@ -91,16 +91,14 @@ The default options are:
 |    Command    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | :-----------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |   `chainId`    | 2757  |
-|   `http.corsdomain`    | 127.0.0.1  |
+|   `http.corsdomain`    | *  |
 |   `http.port`    | 8545  |
-|   `http.api`    | `admin,eth,debug,miner,net,txpool,personal,web3`  |
-|   `ws.corsdomain`    | 127.0.0.1  |
+|   `http.addr`   | 0.0.0.0 |
+|   `http.api`    | admin,eth,debug,miner,net,txpool,personal,web3  |
+|   `ws.corsdomain`    | *  |
+|   `ws.addr`   | 0.0.0.0 |
 |   `ws.port`    | 8545  |
-|   `ws.api`    | `admin,eth,debug,miner,net,txpool,personal,web3`  |
-## PreCompiled Contract MiMC7
-In this project, mimc7 was added to opcode 0x13.  
-mimc7 https://iden3-docs.readthedocs.io/en/latest/_downloads/a04267077fb3fdbf2b608e014706e004/Ed-DSA.pdf
-
+|   `ws.api`    | admin,eth,debug,miner,net,txpool,personal,web3  |
 
 ## How to Use PreCompiled Contract MiMC7 in Solidity
 The input data must padded the remaining left side of 32bytes to "0". (ex 0x01 -> 0x0000000000000000000000000000000000000000000000000000000000000001)  
@@ -113,7 +111,7 @@ function callmimc(bytes32[] memory data) public returns (bytes32 result) {
   assembly {
     let memPtr := mload(0x40)
       let success := call(gas(), 0x13, 0, add(data, 0x20), len, memPtr, 0x20)
-      //let success := call(gas, 0x13, 0, add(data, 0x20), len, memPtr, 0x20)
+      //solc -v < 0.5.0    let success := call(gas, 0x13, 0, add(data, 0x20), len, memPtr, 0x20)
       switch success
       case 0 {
         revert(0,0)
