@@ -65,23 +65,23 @@ make all
 To do  
 First setup & start :
 ```
-sh script.sh setup start
+bash script.sh setup start
 ```
 Restart Geth :
 ```
-sh script.sh start
+bash script.sh start
 ```
 Remove all chaindata & account :
 ```
-sh script.sh rm
+bash script.sh rm
 ```
 Reset all chaindata & account :
 ```
-sh script.sh reset
+bash script.sh reset
 ```
 Same as
 ```
-sh script.sh rm setup
+bash script.sh rm setup
 ```
 ## Geth Option
 
