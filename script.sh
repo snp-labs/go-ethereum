@@ -66,7 +66,7 @@ DEFALTOPTION="--verbosity ${VERBOSITY} console --allow-insecure-unlock --unlock 
             # |           LOG         |console|               unlock-account        (password file)  |               mine option          
 
 #COMMANDS
-REMOVE="rm -rf home_geth"
+REMOVE="rm -rf home_geth/geth"
 INIT="${GETHPWD} --datadir home_geth init genesis"
 ACCOUNTGEN="${GETHPWD} --datadir home_geth account new --password password"
 START="${GETHPWD} --datadir home_geth --networkid ${NETWORKID} --http --http.port ${HTTPPORT} --http.corsdomain ${HTTPDOMAIN} --http.api ${HTTPAPI} --http.addr ${HTTPADDR} --ws --ws.port ${WSPORT} --ws.origins ${WSDOMAIN} --ws.api ${WSAPI} --ws.addr ${WSADDR} ${DEFALTOPTION}"
