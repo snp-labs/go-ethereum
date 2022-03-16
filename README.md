@@ -71,11 +71,11 @@ Restart Geth :
 ```
 bash script.sh start
 ```
-Remove all chaindata & account :
+Remove all chaindata :
 ```
 bash script.sh rm
 ```
-Reset all chaindata & account :
+Re-setup all chaindata :
 ```
 bash script.sh reset
 ```

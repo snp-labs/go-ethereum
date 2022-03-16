@@ -9,7 +9,7 @@ Usage:
 The commands are:
 
         rm          Remove datadir
-        setup       Init geth and account gen
+        setup       Init geth
         reset       Execute rm and setup
         start       Start geth
         gethhelp    View all geth option
@@ -117,8 +117,6 @@ else
     if in_array "setup" "${ARGUMENT[*]}" ; then
         echo "SHELL >>> ${INIT}"
         ${INIT}
-        echo "SHELL >>> ${ACCOUNTGEN}"
-        ${ACCOUNTGEN}
     fi
 
     if in_array "reset" "${ARGUMENT[*]}" ; then
@@ -126,8 +124,6 @@ else
             ${REMOVE}
             echo "SHELL >>> ${INIT}"
             ${INIT}
-            echo "SHELL >>> ${ACCOUNTGEN}"
-            ${ACCOUNTGEN}
     fi
 
     if in_array "start" "${ARGUMENT[*]}" ; then
