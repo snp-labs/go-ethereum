@@ -71,18 +71,6 @@ Restart Geth :
 ```
 bash script.sh start
 ```
-Remove all chaindata :
-```
-bash script.sh rm
-```
-Re-setup all chaindata :
-```
-bash script.sh reset
-```
-Same as
-```
-bash script.sh rm setup
-```
 ## Geth Option
 
 If modify Geth's options, change go-ethereum/genesis & go-ethereum/script.sh files.  

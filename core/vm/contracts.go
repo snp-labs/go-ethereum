@@ -20,9 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -51,8 +49,20 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{2}):  &sha256hash{},
 	common.BytesToAddress([]byte{3}):  &ripemd160hash{},
 	common.BytesToAddress([]byte{4}):  &dataCopy{},
+	common.BytesToAddress([]byte{10}): &bls12381G1Add{},
+	common.BytesToAddress([]byte{11}): &bls12381G1Mul{},
+	common.BytesToAddress([]byte{12}): &bls12381G1MultiExp{},
+	common.BytesToAddress([]byte{13}): &bls12381G2Add{},
+	common.BytesToAddress([]byte{14}): &bls12381G2Mul{},
+	common.BytesToAddress([]byte{15}): &bls12381G2MultiExp{},
+	common.BytesToAddress([]byte{16}): &bls12381Pairing{},
+	common.BytesToAddress([]byte{17}): &bls12381MapG1{},
+	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
 	common.BytesToAddress([]byte{20}): &poseidon{},
+	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
+	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -66,8 +76,20 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{6}):  &bn256AddByzantium{},
 	common.BytesToAddress([]byte{7}):  &bn256ScalarMulByzantium{},
 	common.BytesToAddress([]byte{8}):  &bn256PairingByzantium{},
+	common.BytesToAddress([]byte{10}): &bls12381G1Add{},
+	common.BytesToAddress([]byte{11}): &bls12381G1Mul{},
+	common.BytesToAddress([]byte{12}): &bls12381G1MultiExp{},
+	common.BytesToAddress([]byte{13}): &bls12381G2Add{},
+	common.BytesToAddress([]byte{14}): &bls12381G2Mul{},
+	common.BytesToAddress([]byte{15}): &bls12381G2MultiExp{},
+	common.BytesToAddress([]byte{16}): &bls12381Pairing{},
+	common.BytesToAddress([]byte{17}): &bls12381MapG1{},
+	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
 	common.BytesToAddress([]byte{20}): &poseidon{},
+	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
+	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
 }
 
 // PrecompiledContractsIstanbul contains the default set of pre-compiled Ethereum
@@ -82,8 +104,20 @@ var PrecompiledContractsIstanbul = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{7}):  &bn256ScalarMulIstanbul{},
 	common.BytesToAddress([]byte{8}):  &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{9}):  &blake2F{},
+	common.BytesToAddress([]byte{10}): &bls12381G1Add{},
+	common.BytesToAddress([]byte{11}): &bls12381G1Mul{},
+	common.BytesToAddress([]byte{12}): &bls12381G1MultiExp{},
+	common.BytesToAddress([]byte{13}): &bls12381G2Add{},
+	common.BytesToAddress([]byte{14}): &bls12381G2Mul{},
+	common.BytesToAddress([]byte{15}): &bls12381G2MultiExp{},
+	common.BytesToAddress([]byte{16}): &bls12381Pairing{},
+	common.BytesToAddress([]byte{17}): &bls12381MapG1{},
+	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
 	common.BytesToAddress([]byte{20}): &poseidon{},
+	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
+	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
 }
 
 // PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
@@ -98,8 +132,20 @@ var PrecompiledContractsBerlin = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{7}):  &bn256ScalarMulIstanbul{},
 	common.BytesToAddress([]byte{8}):  &bn256PairingIstanbul{},
 	common.BytesToAddress([]byte{9}):  &blake2F{},
+	common.BytesToAddress([]byte{10}): &bls12381G1Add{},
+	common.BytesToAddress([]byte{11}): &bls12381G1Mul{},
+	common.BytesToAddress([]byte{12}): &bls12381G1MultiExp{},
+	common.BytesToAddress([]byte{13}): &bls12381G2Add{},
+	common.BytesToAddress([]byte{14}): &bls12381G2Mul{},
+	common.BytesToAddress([]byte{15}): &bls12381G2MultiExp{},
+	common.BytesToAddress([]byte{16}): &bls12381Pairing{},
+	common.BytesToAddress([]byte{17}): &bls12381MapG1{},
+	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
 	common.BytesToAddress([]byte{19}): &MiMC7{},
 	common.BytesToAddress([]byte{20}): &poseidon{},
+	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
+	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
 }
 
 // PrecompiledContractsBLS contains the set of pre-compiled Ethereum
@@ -114,8 +160,8 @@ var PrecompiledContractsBLS = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{16}): &bls12381Pairing{},
 	common.BytesToAddress([]byte{17}): &bls12381MapG1{},
 	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
-	common.BytesToAddress([]byte{21}): &bls12381GtExp{},
-	common.BytesToAddress([]byte{22}): &bls12381GtMul{},
+	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
+	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
 	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
 }
 
@@ -555,7 +601,7 @@ func runBn256Pairing(input []byte) ([]byte, error) {
 		cs []*bn256.G1
 		ts []*bn256.G2
 	)
-	startTime := time.Now()
+
 	for i := 0; i < len(input); i += 192 {
 		c, err := newCurvePoint(input[i : i+64])
 		if err != nil {
@@ -568,18 +614,13 @@ func runBn256Pairing(input []byte) ([]byte, error) {
 		cs = append(cs, c)
 		ts = append(ts, t)
 	}
-	spendTime := time.Since(startTime)
-	//log.Printf("input setup takes %s",  spendTime)
-	fmt.Printf("input setup takes %s \n", spendTime)
+
 	// Execute the pairing checks and return the results
-	startTime = time.Now()
 	if bn256.PairingCheck(cs, ts) {
-		//log.Printf("PairingCheck takes %s",  spendTime)
-		fmt.Printf("PairingCheck OK takes %s \n", spendTime)
+
 		return true32Byte, nil
 	}
-	//log.Printf("PairingCheck takes %s",  spendTime)
-	fmt.Printf("PairingCheck takes Fail %s \n", spendTime)
+
 	return false32Byte, nil
 }
 
@@ -939,42 +980,46 @@ func (c *bls12381G2MultiExp) Run(input []byte) ([]byte, error) {
 	return g.EncodePoint(r), nil
 }
 
-type bls12381GtMul struct{}
+type bls12381GtAdd struct{}
 
-func (c *bls12381GtMul) RequiredGas(input []byte) uint64 {
+func (c *bls12381GtAdd) RequiredGas(input []byte) uint64 {
 	return 800
 }
-func (c *bls12381GtMul) Run(input []byte) ([]byte, error) {
-	// Implements EIP-2537 GtExp precompile logic
+func (c *bls12381GtAdd) Run(input []byte) ([]byte, error) {
+	// Implements EIP-2537 GtAdd precompile logic
 	// > Gt multiplication call expects `1152` bytes as an input that is interpreted as byte concatenation of encoding of two Gt point (`576` bytes)
 	// > Output is an encoding of multiexponentiation operation result - single Gt point (`576` bytes).
-
+	if len(input) != 1152 {
+		return nil, errBLS12381InvalidInputLength
+	}
 	g := bls12381.NewGT()
+
 	p0, _ := g.FromBytes(input[:576])
 	p1, _ := g.FromBytes(input[576:])
-	r := g.New()
-	g.Mul(r, p0, p1)
-	out := g.ToBytes(r)
+
+	g.Mul(p0, p0, p1)
+	out := g.ToBytes(p0)
 
 	return out, nil
 }
 
-type bls12381GtExp struct{}
+type bls12381GtMul struct{}
 
-func (c *bls12381GtExp) RequiredGas(input []byte) uint64 {
-	return 826967
+func (c *bls12381GtMul) RequiredGas(input []byte) uint64 {
+	return uint64(826967)
 }
-func (c *bls12381GtExp) Run(input []byte) ([]byte, error) {
-	// Implements EIP-2537 GtExp precompile logic
+func (c *bls12381GtMul) Run(input []byte) ([]byte, error) {
+	// Implements EIP-2537 GtMul precompile logic
 	// > Gt multiplication call expects `608` bytes as an input that is interpreted as byte concatenation of encoding of Gt point (`576` bytes) and encoding of a scalar value (`32` bytes).
 	// > Output is an encoding of multiexponentiation operation result - single Gt point (`576` bytes).
-
+	if len(input) != 608 {
+		return nil, errBLS12381InvalidInputLength
+	}
 	g := bls12381.NewGT()
-	scalar := new(big.Int).SetBytes(input[576:])
 	gt, _ := g.FromBytes(input[:576])
-	r := g.New()
-	g.Exp(r, gt, scalar)
-	out := g.ToBytes(r)
+	scalar := new(big.Int).SetBytes(input[576:])
+	g.Exp(gt, gt, scalar)
+	out := g.ToBytes(gt)
 
 	return out, nil
 }
@@ -1010,13 +1055,11 @@ func (c *bls12381Pairing) Run(input []byte) ([]byte, error) {
 
 		// Decode G1 point
 		p1, err := g1.DecodePoint(input[t0:t1])
-		fmt.Printf("g1 :%v", g1)
 		if err != nil {
 			return nil, err
 		}
 		// Decode G2 point
 		p2, err := g2.DecodePoint(input[t1:t2])
-		fmt.Printf("g2 :%v", g2)
 		if err != nil {
 			return nil, err
 		}
@@ -1150,9 +1193,10 @@ func (c *bls12381PairingCmpGt) Run(input []byte) ([]byte, error) {
 	// Each k slice has the following structure:
 	// > - `128` bytes of G1 point encoding
 	// > - `256` bytes of G2 point encoding
-	// > Output is a `32` bytes where last single byte is `0x01` if pairing result is equal to multiplicative identity in a pairing target field and `0x00` otherwise
+	// > Output is a `32` bytes where last single byte is `0x01` if multiplicative identity in a pairing target field is equal to Gt point and `0x00` otherwise
 	// > (which is equivalent of Big Endian encoding of Solidity values `uint256(1)` and `uin256(0)` respectively).
-	k := (len(input) - 576) / 384
+	p_len := (len(input) - 576)
+	k := p_len / 384
 	if (len(input)-576) <= 0 || (len(input)-576)%384 != 0 || len(input)-384*k != 576 {
 		return nil, errBLS12381InvalidInputLength
 	}
@@ -1168,13 +1212,11 @@ func (c *bls12381PairingCmpGt) Run(input []byte) ([]byte, error) {
 
 		// Decode G1 point
 		p1, err := g1.DecodePoint(input[t0:t1])
-		fmt.Printf("g1 :%v", g1)
 		if err != nil {
 			return nil, err
 		}
 		// Decode G2 point
 		p2, err := g2.DecodePoint(input[t1:t2])
-		fmt.Printf("g2 :%v", g2)
 		if err != nil {
 			return nil, err
 		}
@@ -1191,10 +1233,8 @@ func (c *bls12381PairingCmpGt) Run(input []byte) ([]byte, error) {
 		// Update pairing engine with G1 and G2 ponits
 		e.AddPair(p1, p2)
 	}
-	// Decode Gt
-	gt_bytes := make([]byte, 576)
-	copy(gt_bytes[:576], input[384*k:])
-	fe12, _ := gt.FromBytes(gt_bytes)
+
+	fe12, _ := gt.FromBytes(input[384*k:])
 
 	// Prepare 32 byte output
 	out := make([]byte, 32)
