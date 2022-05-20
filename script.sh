@@ -42,7 +42,8 @@ Geth Default Options(If you want to change options, edit #OPTION(Line 52) in the
 HELP
 exit 0
 }
-
+DIR=`dirname "$0"`
+cd $DIR
 #ARGUMENT ARRAY
 ARGUMENT=$@
 
