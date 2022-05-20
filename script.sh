@@ -8,6 +8,9 @@ Usage:
 
 The commands are:
 
+        clean       make clean
+        make        make all
+        make2..256  make all -j [2,4,6,8,12,32,64,128,256]
         setup       Init geth
         start       Start geth
         gethhelp    View all geth option
@@ -107,6 +110,36 @@ function option_return {
 if [ "$1" == "help" ] ; then
     help
 else
+    if in_array "clean" "${ARGUMENT[*]}" ; then
+        make clean
+    fi
+    if in_array "make" "${ARGUMENT[*]}" ; then
+        make all
+    fi
+    if in_array "make4" "${ARGUMENT[*]}" ; then
+        make all -j 4
+    fi
+    if in_array "make8" "${ARGUMENT[*]}" ; then
+        make all -j 8
+    fi
+    if in_array "make12" "${ARGUMENT[*]}" ; then
+        make all -j 12
+    fi
+    if in_array "make16" "${ARGUMENT[*]}" ; then
+        make all -j 16
+    fi
+    if in_array "make32" "${ARGUMENT[*]}" ; then
+        make all -j 32
+    fi
+    if in_array "make64" "${ARGUMENT[*]}" ; then
+        make all -j 64
+    fi
+    if in_array "make128" "${ARGUMENT[*]}" ; then
+        make all -j 128
+    fi
+    if in_array "make256" "${ARGUMENT[*]}" ; then
+        make all -j 256
+    fi
     if in_array "setup" "${ARGUMENT[*]}" ; then
         ${REMOVE}
         ${INIT}
