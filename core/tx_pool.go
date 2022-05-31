@@ -21,6 +21,7 @@ import (
 	"math"
 	"math/big"
 	"sort"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -51,7 +52,7 @@ const (
 	// more expensive to propagate; larger transactions also take more resources
 	// to validate whether they fit into the pool or not.
 	// origin go-eth txMaxSize = 4 * txSlotZise // 128KB
-	txMaxSize = 128 * 32 * txSlotSize // 128MB
+	txMaxSize = 32 * 128 * 32 * txSlotSize // 1G
 )
 
 var (
@@ -85,7 +86,7 @@ var (
 	// ErrOversizedData is returned if the input data of a transaction is greater
 	// than some meaningful limit a user might use. This is not a consensus error
 	// making the transaction invalid, rather a DOS protection.
-	ErrOversizedData = errors.New("oversized data")
+	ErrOversizedData = errors.New("oversized data " + strconv.Itoa(txMaxSize))
 )
 
 var (
