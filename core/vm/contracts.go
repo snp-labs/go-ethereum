@@ -62,7 +62,7 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{20}): &poseidon{},
 	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
 	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
-	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmp{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -89,7 +89,7 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{20}): &poseidon{},
 	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
 	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
-	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmp{},
 }
 
 // PrecompiledContractsIstanbul contains the default set of pre-compiled Ethereum
@@ -117,7 +117,7 @@ var PrecompiledContractsIstanbul = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{20}): &poseidon{},
 	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
 	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
-	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmp{},
 }
 
 // PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
@@ -145,7 +145,7 @@ var PrecompiledContractsBerlin = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{20}): &poseidon{},
 	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
 	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
-	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmp{},
 }
 
 // PrecompiledContractsBLS contains the set of pre-compiled Ethereum
@@ -162,7 +162,7 @@ var PrecompiledContractsBLS = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
 	common.BytesToAddress([]byte{21}): &bls12381GtMul{},
 	common.BytesToAddress([]byte{22}): &bls12381GtAdd{},
-	common.BytesToAddress([]byte{23}): &bls12381PairingCmpGt{},
+	common.BytesToAddress([]byte{23}): &bls12381PairingCmp{},
 }
 
 var (
@@ -1180,32 +1180,51 @@ func (c *bls12381MapG2) Run(input []byte) ([]byte, error) {
 	return g.EncodePoint(r), nil
 }
 
-type bls12381PairingCmpGt struct{}
+type bls12381PairingCmp struct{}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
-func (c *bls12381PairingCmpGt) RequiredGas(input []byte) uint64 {
+func (c *bls12381PairingCmp) RequiredGas(input []byte) uint64 {
 	return params.Bls12381PairingBaseGas + uint64(len(input)/384)*params.Bls12381PairingPerPairGas
 }
 
-func (c *bls12381PairingCmpGt) Run(input []byte) ([]byte, error) {
+func (c *bls12381PairingCmp) Run(input []byte) ([]byte, error) {
 	// Implements EIP-2537 Pairing precompile logic.
-	// > Pairing call expects `384*k + 576` bytes as an inputs. 384*k bytes are interpreted as byte concatenation of `k` slices. last 576 bytes data is Gt which compare with pairing result
+	// > Pairing call expects `384*k + 576` bytes or `384*k`as an inputs. 384*k bytes are interpreted as byte concatenation of `k` slices.
+	// input case `384*k + 576, last 576 bytes data is Gt which compare with pairing result
 	// Each k slice has the following structure:
 	// > - `128` bytes of G1 point encoding
 	// > - `256` bytes of G2 point encoding
-	// > Output is a `32` bytes where last single byte is `0x01` if multiplicative identity in a pairing target field is equal to Gt point and `0x00` otherwise
+	// > Output is a `32` bytes where last single byte is `0x01` if multiplicative identity in a pairing target field is equal to left side and `0x00` otherwise
 	// > (which is equivalent of Big Endian encoding of Solidity values `uint256(1)` and `uin256(0)` respectively).
-	p_len := (len(input) - 576)
-	k := p_len / 384
-	if (len(input)-576) <= 0 || (len(input)-576)%384 != 0 || len(input)-384*k != 576 {
-		return nil, errBLS12381InvalidInputLength
-	}
+	k := 0
 
 	// Initialize BLS12-381 pairing engine
 	e := bls12381.NewPairingEngine()
 	g1, g2, gt := e.G1, e.G2, bls12381.NewGT()
-
-	// Decode pairs
+	fe12 := gt.New().One()
+	if len(input)%384 == 0 {
+		k = len(input)/384 - 1
+		off := k * 384
+		t0, t1, t2 := off, off+128, off+384
+		p1, err := g1.DecodePoint(input[t0:t1])
+		if err != nil {
+			return nil, err
+		}
+		// Decode G2 point
+		p2, err := g2.DecodePoint(input[t1:t2])
+		if err != nil {
+			return nil, err
+		}
+		e.AddPair(p1, p2)
+		fe12 = e.Result()
+	} else {
+		p_len := (len(input) - 576)
+		k = p_len / 384
+		if p_len <= 0 || p_len%384 != 0 || p_len != 384*k {
+			return nil, errBLS12381InvalidInputLength
+		}
+		fe12, _ = gt.FromBytes(input[384*k:])
+	}
 	for i := 0; i < k; i++ {
 		off := 384 * i
 		t0, t1, t2 := off, off+128, off+384
@@ -1233,15 +1252,13 @@ func (c *bls12381PairingCmpGt) Run(input []byte) ([]byte, error) {
 		// Update pairing engine with G1 and G2 ponits
 		e.AddPair(p1, p2)
 	}
-
-	fe12, _ := gt.FromBytes(input[384*k:])
-
+	result := e.Result()
 	// Prepare 32 byte output
 	out := make([]byte, 32)
 
 	// Compute pairing and set the result
 
-	if e.Result().Equal(fe12) {
+	if result.Equal(fe12) {
 		out[31] = 1
 	}
 	return out, nil
