@@ -1203,20 +1203,22 @@ func (c *bls12381PairingCmp) Run(input []byte) ([]byte, error) {
 	g1, g2, gt := e.G1, e.G2, bls12381.NewGT()
 	fe12 := gt.New().One()
 	if len(input)%384 == 0 {
+		efirst := bls12381.NewPairingEngine()
+		g1f, g2f := e.G1, e.G2
 		k = len(input)/384 - 1
 		off := k * 384
 		t0, t1, t2 := off, off+128, off+384
-		p1, err := g1.DecodePoint(input[t0:t1])
+		p1, err := g1f.DecodePoint(input[t0:t1])
 		if err != nil {
 			return nil, err
 		}
 		// Decode G2 point
-		p2, err := g2.DecodePoint(input[t1:t2])
+		p2, err := g2f.DecodePoint(input[t1:t2])
 		if err != nil {
 			return nil, err
 		}
-		e.AddPair(p1, p2)
-		fe12 = e.Result()
+		efirst.AddPair(p1, p2)
+		fe12 = efirst.Result()
 	} else {
 		p_len := (len(input) - 576)
 		k = p_len / 384
@@ -1226,6 +1228,7 @@ func (c *bls12381PairingCmp) Run(input []byte) ([]byte, error) {
 		fe12, _ = gt.FromBytes(input[384*k:])
 	}
 	for i := 0; i < k; i++ {
+
 		off := 384 * i
 		t0, t1, t2 := off, off+128, off+384
 
@@ -1257,7 +1260,6 @@ func (c *bls12381PairingCmp) Run(input []byte) ([]byte, error) {
 	out := make([]byte, 32)
 
 	// Compute pairing and set the result
-
 	if result.Equal(fe12) {
 		out[31] = 1
 	}
