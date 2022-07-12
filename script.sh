@@ -9,10 +9,13 @@ Usage:
 The commands are:
 
         clean       make clean
-        make        make all
-        make2..256  make all -j [2,4,6,8,12,32,64,128,256]
+        make        make all geth
+        make -j n   make all geth with n cores
         setup       Init geth
         start       Start geth
+        console     attach to geth js console
+        status      print the status of geth
+
         gethhelp    View all geth option
 
 Geth Default Options(If you want to change options, edit #OPTION(Line 52) in the script.sh):
@@ -48,8 +51,9 @@ exit 0
 DIR=`dirname "$0"`
 cd $DIR
 #ARGUMENT ARRAY
-ARGUMENT=$@
-
+IFS=$'\n'
+ARGUMENT=($@)
+IFS=$' '
 #OPTION
 GETHPWD="./build/bin/geth"      # geth.exe file path
 
@@ -71,90 +75,95 @@ DEFALTOPTION="--verbosity ${VERBOSITY} --allow-insecure-unlock --unlock 0 --pass
 REMOVE="rm -rf home_geth/geth && rm -rf geth.log"
 INIT="${GETHPWD} --datadir home_geth init genesis"
 ACCOUNTGEN="${GETHPWD} --datadir home_geth account new --password password"
-SETUP="${GETHPWD} --datadir home_geth --networkid ${NETWORKID} --vmdebug --http --http.port ${HTTPPORT} --http.corsdomain ${HTTPDOMAIN} --http.api ${HTTPAPI} --http.addr ${HTTPADDR} --ws --ws.port ${WSPORT} --ws.origins ${WSDOMAIN} --ws.api ${WSAPI} --ws.addr ${WSADDR} ${DEFALTOPTION}"
-START="${SETUP} --dev console"
+START="${GETHPWD} --datadir home_geth --networkid ${NETWORKID} --vmdebug --http --http.port ${HTTPPORT} --http.corsdomain ${HTTPDOMAIN} --http.api ${HTTPAPI} --http.addr ${HTTPADDR} --ws --ws.port ${WSPORT} --ws.origins ${WSDOMAIN} --ws.api ${WSAPI} --ws.addr ${WSADDR} ${DEFALTOPTION}"
 HELP="${GETHPWD} help"
 [ -z "$1" ] && help
 
-function in_array {
-    ARRAY=$2
-    
-    for e in ${ARRAY[*]}
-    do
-        if [[ "$e" == "$1" ]]
-        then
-            return 0
-        fi
-    done
 
-    return 1
-}
-function option_return {
-    ARRAY=$2
-    index=0
-    one=1
-    for e in ${ARRAY[*]}
-    do
-        if [[ "$e" == "$1" ]]
-        then
-            return $(expr $index + $one)
-        fi
-        index=$(expr $index + $one)
-    done
+#FLAG
+CLEAN_FLAG=0
+MAKE_FLAG=0
+CORE_FLAG=1
+SETUP_FLAG=0
+START_FLAG=0
+GETHHELP_FLAG=0
+CONSOLE_FLAG=0
+END_FLAG=0
+STATUS_FLAG=0
+LOG_FLAG=0
 
-    return -1
-}
+loop_i=0
+for e in ${ARGUMENT[@]}
+do
+    loop_i=$((loop_i + 1))
+    if [ $e = "clean" ]; then
+        CLEAN_FLAG=1
+    elif [ $e = "make" ]; then
+        MAKE_FLAG=1
+    elif [ $e = "-j" ] && [ $loop_i -lt ${#ARGUMENT[@]} ]; then
+        CORE_FLAG=${ARGUMENT[loop_i]}
+    elif [ $e = "setup" ]; then
+        SETUP_FLAG=1
+    elif [ $e = "start" ]; then
+        START_FLAG=1
+    elif [ $e = "gethhelp" ]; then
+        GETHHELP_FLAG=1
+    elif [ $e = "console" ]; then
+        CONSOLE_FLAG=1
+    elif [ $e = "stop" ]; then
+        END_FLAG=1
+    elif [ $e = "status" ]; then
+        STATUS_FLAG=1
+    elif [ $e = "log" ]; then
+        LOG_FLAG=1
+    fi
+done
 
 
 
+#EXEC
 if [ "$1" == "help" ] ; then
     help
+elif [ $GETHHELP_FLAG = 1 ]; then
+    echo "SHELL >>> ${HELP}"
+    ${HELP}
+elif [ $LOG_FLAG = 1 ]; then
+    tail -f home_geth/geth.log
+elif [ $STATUS_FLAG = 1 ]; then
+    PIDS=`ps -ef | grep home_geth`
+    if [[ "$PIDS" =~ "${START}" ]]; then
+        echo "geth is running"
+    else
+        echo "geth is not running"
+    fi
 else
-    if in_array "clean" "${ARGUMENT[*]}" ; then
+    if [ $CLEAN_FLAG = 1 ] ; then
         make clean
     fi
-    if in_array "make" "${ARGUMENT[*]}" ; then
-        make all
+    if [ $MAKE_FLAG = 1 ] ; then
+        echo "SHELL >>> make all -j $CORE_FLAG"
+        make all -j $CORE_FLAG
     fi
-    if in_array "make4" "${ARGUMENT[*]}" ; then
-        make all -j 4
-    fi
-    if in_array "make8" "${ARGUMENT[*]}" ; then
-        make all -j 8
-    fi
-    if in_array "make12" "${ARGUMENT[*]}" ; then
-        make all -j 12
-    fi
-    if in_array "make16" "${ARGUMENT[*]}" ; then
-        make all -j 16
-    fi
-    if in_array "make32" "${ARGUMENT[*]}" ; then
-        make all -j 32
-    fi
-    if in_array "make64" "${ARGUMENT[*]}" ; then
-        make all -j 64
-    fi
-    if in_array "make128" "${ARGUMENT[*]}" ; then
-        make all -j 128
-    fi
-    if in_array "make256" "${ARGUMENT[*]}" ; then
-        make all -j 256
-    fi
-    if in_array "setup" "${ARGUMENT[*]}" ; then
+    if [ $SETUP_FLAG = 1 ] ; then
         ${REMOVE}
         ${INIT}
-        ${SETUP} 2>> geth.log &
-        PID=$!
-        sleep 3
+    fi
+    if  [ $START_FLAG = 1 ]; then
+        PIDS=`ps -ef | grep home_geth`
+        if [[ "$PIDS" =~ "${START}" ]]; then
+            echo "geth is already running"
+        else
+            echo "SHELL >>> ${START}"
+            nohup ${START} >> home_geth/geth.log 2>&1 &
+            echo $! > home_geth/pid.txt
+        fi
+    fi
+    if [ $END_FLAG = 1 ]; then
+        PID=`cat home_geth/pid.txt`
+        echo "stop geth"
         kill $PID
-        sleep 4
     fi
-    if in_array "start" "${ARGUMENT[*]}" ; then
-        echo "SHELL >>> ${START}"
-        ${START} 2>> geth.log
-    fi
-    if in_array "gethhelp" "${ARGUMENT[*]}" ; then
-        echo "SHELL >>> ${HELP}"
-        ${HELP}
+    if [ $CONSOLE_FLAG = 1 ]; then
+        ${GETHPWD} attach "http://${HTTPADDR}:${HTTPPORT}"
     fi
 fi
