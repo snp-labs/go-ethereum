@@ -71,6 +71,19 @@ Restart Geth :
 ```
 bash script.sh start
 ```
+Attach Geth :
+```
+bash script.sh console
+```
+Stop Geth :
+```
+bash script.sh stop
+```
+View log :
+```
+bash script.sh log
+```
+
 ## Geth Option
 
 If modify Geth's options, change go-ethereum/genesis & go-ethereum/script.sh files.  

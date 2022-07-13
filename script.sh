@@ -11,12 +11,12 @@ The commands are:
         clean       make clean
         make        make all geth
         make -j n   make all geth with n cores
-        setup       Init geth
-        start       Start geth
+        setup       init geth
+        start       start geth
         console     attach to geth js console
         status      print the status of geth
-
-        gethhelp    View all geth option
+        log         cat geth log
+        gethhelp    view all geth option
 
 Geth Default Options(If you want to change options, edit #OPTION(Line 52) in the script.sh):
 
