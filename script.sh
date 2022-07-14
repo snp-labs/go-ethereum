@@ -100,7 +100,7 @@ do
         CLEAN_FLAG=1
     elif [ $e = "make" ]; then
         MAKE_FLAG=1
-    elif [ $e = "-j" ] && [ $loop_i -lt ${#ARGUMENT[@]} ]; then
+    elif [[ $e =~ "-j" ]] && [ $loop_i -lt ${#ARGUMENT[@]} ]; then
         CORE_FLAG=${ARGUMENT[loop_i]}
     elif [ $e = "setup" ]; then
         SETUP_FLAG=1
