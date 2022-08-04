@@ -26,7 +26,7 @@ Geth Default Options(If you want to change options, edit #OPTION(Line 52) in the
         --mine                   |   Enable mining(Use with --miner.threads)
         console                  |   Use geth console
 
-           OPTION           |   VALUE                                               
+           OPTION           |   VALUE
                             |
         --networkid         |  ${NETWORKID}                                              
                             |
@@ -57,6 +57,7 @@ IFS=$' '
 #OPTION
 GETHPWD="./build/bin/geth"      # geth.exe file path
 
+PORT=30000
 NETWORKID=2757      # --networkid
 HTTPPORT=8545       # --http.port
 HTTPADDR="127.0.0.1"  # --http.addr
@@ -75,7 +76,7 @@ DEFALTOPTION="--verbosity ${VERBOSITY} --allow-insecure-unlock --unlock 0 --pass
 REMOVE="rm -rf home_geth/geth && rm -rf geth.log"
 INIT="${GETHPWD} --datadir home_geth init genesis"
 ACCOUNTGEN="${GETHPWD} --datadir home_geth account new --password password"
-START="${GETHPWD} --datadir home_geth --networkid ${NETWORKID} --vmdebug --http --http.port ${HTTPPORT} --http.corsdomain ${HTTPDOMAIN} --http.api ${HTTPAPI} --http.addr ${HTTPADDR} --ws --ws.port ${WSPORT} --ws.origins ${WSDOMAIN} --ws.api ${WSAPI} --ws.addr ${WSADDR} ${DEFALTOPTION} --miner.gasprice 100000"
+START="${GETHPWD} --datadir home_geth --networkid ${NETWORKID} --vmdebug --port 30000 --http --http.port ${HTTPPORT} --http.corsdomain ${HTTPDOMAIN} --http.api ${HTTPAPI} --http.addr ${HTTPADDR} --ws --ws.port ${WSPORT} --ws.origins ${WSDOMAIN} --ws.api ${WSAPI} --ws.addr ${WSADDR} ${DEFALTOPTION} --miner.gasprice 100000"
 HELP="${GETHPWD} help"
 [ -z "$1" ] && help
 
