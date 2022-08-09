@@ -23,14 +23,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/light"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/metrics"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/p2p/enode"
 	"github.com/ethereum/go-ethereum/p2p/enr"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/trie"
 )
 
@@ -285,7 +283,7 @@ func ServiceGetAccountRangeQuery(chain *core.BlockChain, req *GetAccountRangePac
 		req.Bytes = softResponseLimit
 	}
 	// Retrieve the requested state and bail out if non existent
-	tr, err := trie.New(req.Root, chain.StateCache().TrieDB())
+	tr, err := trie.New(common.Hash{}, req.Root, chain.StateCache().TrieDB())
 	if err != nil {
 		return nil, nil
 	}
@@ -299,7 +297,7 @@ func ServiceGetAccountRangeQuery(chain *core.BlockChain, req *GetAccountRangePac
 		size     uint64
 		last     common.Hash
 	)
-	for it.Next() && size < req.Bytes {
+	for it.Next() {
 		hash, account := it.Hash(), common.CopyBytes(it.Account())
 
 		// Track the returned interval for the Merkle proofs
@@ -313,6 +311,9 @@ func ServiceGetAccountRangeQuery(chain *core.BlockChain, req *GetAccountRangePac
 		})
 		// If we've exceeded the request threshold, abort
 		if bytes.Compare(hash[:], req.Limit[:]) >= 0 {
+			break
+		}
+		if size > req.Bytes {
 			break
 		}
 	}
@@ -401,24 +402,26 @@ func ServiceGetStorageRangesQuery(chain *core.BlockChain, req *GetStorageRangesP
 				break
 			}
 		}
-		slots = append(slots, storage)
+		if len(storage) > 0 {
+			slots = append(slots, storage)
+		}
 		it.Release()
 
 		// Generate the Merkle proofs for the first and last storage slot, but
 		// only if the response was capped. If the entire storage trie included
 		// in the response, no need for any proofs.
-		if origin != (common.Hash{}) || abort {
+		if origin != (common.Hash{}) || (abort && len(storage) > 0) {
 			// Request started at a non-zero hash or was capped prematurely, add
 			// the endpoint Merkle proofs
-			accTrie, err := trie.New(req.Root, chain.StateCache().TrieDB())
+			accTrie, err := trie.NewStateTrie(common.Hash{}, req.Root, chain.StateCache().TrieDB())
 			if err != nil {
 				return nil, nil
 			}
-			var acc types.StateAccount
-			if err := rlp.DecodeBytes(accTrie.Get(account[:]), &acc); err != nil {
+			acc, err := accTrie.TryGetAccountWithPreHashedKey(account[:])
+			if err != nil || acc == nil {
 				return nil, nil
 			}
-			stTrie, err := trie.New(acc.Root, chain.StateCache().TrieDB())
+			stTrie, err := trie.NewStateTrie(account, acc.Root, chain.StateCache().TrieDB())
 			if err != nil {
 				return nil, nil
 			}
@@ -464,7 +467,7 @@ func ServiceGetByteCodesQuery(chain *core.BlockChain, req *GetByteCodesPacket) [
 			// Peers should not request the empty code, but if they do, at
 			// least sent them back a correct response without db lookups
 			codes = append(codes, []byte{})
-		} else if blob, err := chain.ContractCode(hash); err == nil {
+		} else if blob, err := chain.ContractCodeWithPrefix(hash); err == nil {
 			codes = append(codes, blob)
 			bytes += uint64(len(blob))
 		}
@@ -484,7 +487,7 @@ func ServiceGetTrieNodesQuery(chain *core.BlockChain, req *GetTrieNodesPacket, s
 	// Make sure we have the state associated with the request
 	triedb := chain.StateCache().TrieDB()
 
-	accTrie, err := trie.NewSecure(req.Root, triedb)
+	accTrie, err := trie.NewStateTrie(common.Hash{}, req.Root, triedb)
 	if err != nil {
 		// We don't have the requested state available, bail out
 		return nil, nil
@@ -526,7 +529,7 @@ func ServiceGetTrieNodesQuery(chain *core.BlockChain, req *GetTrieNodesPacket, s
 			if err != nil || account == nil {
 				break
 			}
-			stTrie, err := trie.NewSecure(common.BytesToHash(account.Root), triedb)
+			stTrie, err := trie.NewStateTrie(common.BytesToHash(pathset[0]), common.BytesToHash(account.Root), triedb)
 			loads++ // always account database reads, even for failures
 			if err != nil {
 				break
