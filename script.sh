@@ -69,7 +69,7 @@ WSADDR="127.0.0.1"    # --ws.addr
 WSAPI="admin,eth,debug,miner,net,txpool,personal,web3"      # --ws.api
 VERBOSITY=3                 # --verbosity  If you want show geth's log, changed this value to 3
 MINERTHREADS=1              # --miner.threads
-DEFALTOPTION="--verbosity ${VERBOSITY} --allow-insecure-unlock --unlock 0 --password password --mine --miner.threads ${MINERTHREADS} --miner.gaslimit 3000000000"
+DEFALTOPTION="--verbosity ${VERBOSITY} --allow-insecure-unlock --unlock 0 --password password --mine --miner.threads ${MINERTHREADS} --miner.gaslimit 3000000000 --rpc.gascap 3000000000"
             # |           LOG               unlock-account        (password file)  |               mine option
 
 #COMMANDS
